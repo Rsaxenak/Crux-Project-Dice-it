@@ -14,9 +14,19 @@ screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
 # Cube
 dice = Cube(0, 0, 0)
 
+# offset camera
+offset = [0,0]
+
 # Tiles
-Tiles = []
-tile_1 = Tile(0, 0, 0)
+occupied_coords = []
+tiles = [
+     Tile(0, 0, 0, occupied_coords),
+     Tile(0, 1, 0, occupied_coords),
+     Tile(1, 0, 0, occupied_coords),
+     Tile(1, 1, 0, occupied_coords)
+]
+
+solution_path = []
 
 # Game loop
 running = True
@@ -30,18 +40,24 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_w or event.key == pygame.K_UP:
-                    dice.y += 1
-                if event.key == pygame.K_s or event.key == pygame.K_DOWN:
-                    dice.y -= 1
-                if event.key == pygame.K_a or event.key == pygame.K_LEFT:
-                    dice.x -= 1
-                if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-                    dice.x += 1
-    
-    tile_1.draw(screen)
+                # Dice movement over all the tiles
+                dice.movement(event, occupied_coords, offset)
 
-    dice.draw(screen)
+                # Generate new tiles
+                if event.key == pygame.K_g:
+                    for tile in tiles:
+                        tile.generate_tiles(30, dice, tiles, occupied_coords, solution_path)
+
+    pressed = pygame.key.get_pressed()
+    for tile in tiles:
+        tile.draw(screen, offset)
+        # Tiles should be generated everytime the player reaches the end
+        if tile.type == 'end' and (tile.x, tile.y, tile.z) == (dice.x, dice.y, dice.z):
+            tile.generate_tiles(30, dice, tiles, occupied_coords, solution_path)
+            print(solution_path)
+        
+
+    dice.draw(screen, offset)
     #cube.movement()
 
     # update display

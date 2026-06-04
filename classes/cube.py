@@ -13,9 +13,9 @@ class Cube:
         self.color = (255, 0, 0)
         self.edge_size = 30
 
-    def draw(self, screen):
-        self.coords = (400 + self.y * 17.5 * math.sqrt(3) + self.x * 17.5 * math.sqrt(3), 
-                       400 - self.y * 17.5 + self.x * 17.5)
+    def draw(self, screen, offset):
+        self.coords = (400 + (self.y- offset[1]) * 17.5 * math.sqrt(3) + (self.x - offset[0]) * 17.5 * math.sqrt(3), 
+                       400 - (self.y - offset[1]) * 17.5 + (self.x - offset[0]) * 17.5)
         self.polygon = [
             (self.coords[0], self.coords[1] - self.edge_size/2), # Top
             (self.coords[0] + self.edge_size/2 * math.sqrt(3), self.coords[1]), # Right
@@ -25,15 +25,19 @@ class Cube:
 
         pygame.draw.polygon(screen, self.color, self.polygon)
     
-    def movement(self):
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_w or event.key == pygame.K_UP:
-                    self.y += 1
-                if event.key == pygame.K_s or event.key == pygame.K_DOWN:
-                    self.y -= 1
-                if event.key == pygame.K_a or event.key == pygame.K_LEFT:
-                    self.x -= 1
-                if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-                    self.x += 1
+    def movement(self, event, occupied_tiles, offset):
+        if event.key in (pygame.K_w, pygame.K_UP) and (self.x, self.y + 1, self.z) in occupied_tiles:
+            self.y += 1
+            offset[1] += 1
+        if event.key in (pygame.K_s, pygame.K_DOWN) and (self.x, self.y - 1, self.z) in occupied_tiles:
+            self.y -= 1
+            offset[1] -= 1
+        if event.key in (pygame.K_a, pygame.K_LEFT) and (self.x - 1, self.y, self.z) in occupied_tiles:
+            self.x -= 1
+            offset[0] -= 1
+        if event.key in (pygame.K_d, pygame.K_RIGHT) and (self.x + 1, self.y, self.z) in occupied_tiles:
+            self.x += 1
+            offset[0] += 1
+        
+
                 
