@@ -81,7 +81,7 @@ while running:
     for tile in tiles:
         tile.draw(screen, offset)
         # Tiles should be generated everytime the player reaches the end
-        if tile.type == 'end' and (tile.x, tile.y, tile.z) == (dice.x, dice.y, dice.z):
+        if tile.type == 'end' and (tile.x, tile.y, tile.z) == (dice.x, dice.y, dice.z) and solution_face == dice.top:
             tile.generate_tiles(30, dice, tiles, occupied_coords, solution_path)
             solution_giver(dice)
         
