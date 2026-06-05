@@ -27,12 +27,40 @@ tiles = [
 ]
 
 solution_path = []
+solution_face = 0
+
+def solution_giver(cube, solution_way = solution_path):
+    global solution_face
+    cube_sides = {'top':cube.top,
+                  'bottom': cube.bottom,
+                  'left': cube.left,
+                  'right': cube.right,
+                  'front': cube.front,
+                  'back': cube.back}
+    for direction in solution_way:
+        if direction == 'up':
+            cube_sides['top'], cube_sides['bottom'], cube_sides['front'], cube_sides['back'] = cube_sides['front'], cube_sides['back'], cube_sides['bottom'], cube_sides['top']
+        if direction == 'down':
+            cube_sides['top'], cube_sides['bottom'], cube_sides['front'], cube_sides['back'] = cube_sides['back'], cube_sides['front'], cube_sides['top'], cube_sides['bottom']
+        if direction == 'left':
+            cube_sides['top'], cube_sides['bottom'], cube_sides['left'], cube_sides['right'] = cube_sides['right'], cube_sides['left'], cube_sides['top'], cube_sides['bottom']
+        if direction == 'right':
+            cube_sides['top'], cube_sides['bottom'], cube_sides['left'], cube_sides['right'] = cube_sides['left'], cube_sides['right'], cube_sides['bottom'], cube_sides['top']
+
+    solution_face = cube_sides['top']
+
+font = pygame.font.SysFont("Courier", 20, True)
 
 # Game loop
 running = True
 while running:
     # background color
     screen.fill("white")
+
+    top_side = font.render(f'Your top side : {dice.top}', True, (128, 128, 128))
+    screen.blit(top_side, (20, 20))
+    required_side = font.render(f'Required side : {solution_face}', True, (128, 128, 128))
+    screen.blit(required_side, (20, 50))
 
     # Event catching loop
     for event in pygame.event.get():
@@ -47,6 +75,7 @@ while running:
                 if event.key == pygame.K_g:
                     for tile in tiles:
                         tile.generate_tiles(30, dice, tiles, occupied_coords, solution_path)
+                        solution_giver(dice)
 
     pressed = pygame.key.get_pressed()
     for tile in tiles:
@@ -54,7 +83,7 @@ while running:
         # Tiles should be generated everytime the player reaches the end
         if tile.type == 'end' and (tile.x, tile.y, tile.z) == (dice.x, dice.y, dice.z):
             tile.generate_tiles(30, dice, tiles, occupied_coords, solution_path)
-            print(solution_path)
+            solution_giver(dice)
         
 
     dice.draw(screen, offset)

@@ -83,12 +83,32 @@ class Tile:
                 tile_list.append(Tile(new_tile_coords[0], new_tile_coords[1], new_tile_coords[2], occupied_list))
                 solution_path.append(direction)
                 
-
+            
             # If no such direction exists anymore, remove it
             else :
                 break
-    
+        
+        print(solution_path)
         # To find the end_tile
         end_tile = tile_list[-1]
-        
         end_tile.type = 'end'
+
+        cube_sides = {'top':cube.top,
+                      'bottom': cube.bottom,
+                      'left': cube.left,
+                      'right': cube.right,
+                      'front': cube.front,
+                      'back': cube.back}
+
+        for direction in solution_path:
+            if direction == 'up':
+                cube_sides['top'], cube_sides['bottom'], cube_sides['front'], cube_sides['back'] = cube_sides['front'], cube_sides['back'], cube_sides['bottom'], cube_sides['top']
+            if direction == 'down':
+                cube_sides['top'], cube_sides['bottom'], cube_sides['front'], cube_sides['back'] = cube_sides['back'], cube_sides['front'], cube_sides['top'], cube_sides['bottom']
+            if direction == 'left':
+                cube_sides['top'], cube_sides['bottom'], cube_sides['left'], cube_sides['right'] = cube_sides['right'], cube_sides['left'], cube_sides['top'], cube_sides['bottom']
+            if direction == 'right':
+                cube_sides['top'], cube_sides['bottom'], cube_sides['left'], cube_sides['right'] = cube_sides['left'], cube_sides['right'], cube_sides['bottom'], cube_sides['top']
+
+        
+    
