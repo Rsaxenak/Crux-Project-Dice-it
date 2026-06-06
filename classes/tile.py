@@ -14,6 +14,7 @@ class Tile:
         self.edge_size = 30 # Actual size of edge, not isometrically
 
         self.type = 'normal'
+        self.stepped_on = 0
 
         # Adds the tiles coordinates to the occupied list
         occupied_list.append((x, y, z))
@@ -34,10 +35,12 @@ class Tile:
 
         if self.type == 'end':
             self.color = (0, 255, 0)
+        elif self.type == 'broken':
+            self.color = (0, 0, 255)
         else :
             self.color = (128, 128, 128)
 
-    def generate_tiles(self, n, cube, tile_list, occupied_list, solution_path):
+    def generate_tiles(self, n, cube, tile_list, occupied_list, solution_path, level_type):
         
         # Create a shallow copy to iterate over a list
         copy_of_tile_list = [el for el in tile_list]
@@ -110,5 +113,20 @@ class Tile:
             if direction == 'right':
                 cube_sides['top'], cube_sides['bottom'], cube_sides['left'], cube_sides['right'] = cube_sides['left'], cube_sides['right'], cube_sides['bottom'], cube_sides['top']
 
-        
-    
+        if level_type == 'broken_tiles':
+            for tile in tile_list:
+                selector = random.randint(0, 10)
+                if selector in range(0, 3) and tile.type != 'end':
+                    tile.type = 'broken'
+
+
+    def broken_tiles(self, cube, tile_list, occupied_list):
+        for tile in tile_list[:]:
+
+            if tile.type == 'broken':
+                if (cube.x, cube.y, cube.z) == (tile.x, tile.y, tile.z):
+                    tile.stepped_on = 1
+            
+            if tile.stepped_on and (cube.x, cube.y, cube.z) != (tile.x, tile.y, tile.z):
+                tile_list.remove(tile)
+                occupied_list.remove((tile.x, tile.y, tile.z))

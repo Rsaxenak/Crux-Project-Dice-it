@@ -2,6 +2,9 @@
 import pygame
 pygame.init()
 
+# additional libraries
+import random
+
 # import classes from files
 from classes.tile import Tile
 from classes.cube import Cube
@@ -26,6 +29,13 @@ tiles = [
      Tile(1, 1, 0, occupied_coords)
 ]
 
+# Score system
+score = 0
+
+# Level types
+level_type = 'normal'
+
+# Solution path and required face
 solution_path = []
 solution_face = 0
 
@@ -49,6 +59,25 @@ def solution_giver(cube, solution_way = solution_path):
 
     solution_face = cube_sides['top']
 
+# Next level generator
+
+def next_level(tile, dice = dice, tiles = tiles, occupied_path = occupied_coords, solution_path = solution_path):
+    global level_type
+    level_type_chooser = random.randint(0, 10)
+    if level_type_chooser in range(0, 1):
+        level_type = 'normal'
+    #elif level_type_chooser in range(6, 8):
+    #    level_type = 'lock'
+    else:
+        level_type = 'broken_tiles'
+
+    tile.generate_tiles(30, dice, tiles, occupied_path, solution_path, level_type)
+    solution_giver(dice)
+
+    
+    
+    print(level_type)
+
 font = pygame.font.SysFont("Courier", 20, True)
 
 # Game loop
@@ -57,10 +86,13 @@ while running:
     # background color
     screen.fill("white")
 
+    # All the text shown in the game
     top_side = font.render(f'Your top side : {dice.top}', True, (128, 128, 128))
     screen.blit(top_side, (20, 20))
     required_side = font.render(f'Required side : {solution_face}', True, (128, 128, 128))
     screen.blit(required_side, (20, 50))
+    score_text = font.render(f'Score : {score}', True, (128, 128, 128))
+    screen.blit(score_text, (20, 60))
 
     # Event catching loop
     for event in pygame.event.get():
@@ -74,17 +106,21 @@ while running:
                 # Generate new tiles
                 if event.key == pygame.K_g:
                     for tile in tiles:
-                        tile.generate_tiles(30, dice, tiles, occupied_coords, solution_path)
-                        solution_giver(dice)
+                        next_level(tile)
+                        score = 0
 
     pressed = pygame.key.get_pressed()
     for tile in tiles:
         tile.draw(screen, offset)
+        tile.broken_tiles(dice, tiles, occupied_coords)
         # Tiles should be generated everytime the player reaches the end
         if tile.type == 'end' and (tile.x, tile.y, tile.z) == (dice.x, dice.y, dice.z) and solution_face == dice.top:
-            tile.generate_tiles(30, dice, tiles, occupied_coords, solution_path)
-            solution_giver(dice)
-        
+            next_level(tile)
+            score+=1
+    
+
+    # set the game fps to 60
+    pygame.time.Clock().tick(60)
 
     dice.draw(screen, offset)
     #cube.movement()
