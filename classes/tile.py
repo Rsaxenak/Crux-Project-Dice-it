@@ -37,10 +37,12 @@ class Tile:
             self.color = (0, 255, 0)
         elif self.type == 'broken':
             self.color = (0, 0, 255)
+        elif self.type == 'locker':
+            self.color = (255, 255, 0)
         else :
             self.color = (128, 128, 128)
 
-    def generate_tiles(self, n, cube, tile_list, occupied_list, solution_path, level_type):
+    def generate_tiles(self, n, cube, tile_list, occupied_list, solution_path):
         
         # Create a shallow copy to iterate over a list
         copy_of_tile_list = [el for el in tile_list]
@@ -96,32 +98,98 @@ class Tile:
         end_tile = tile_list[-1]
         end_tile.type = 'end'
 
-        cube_sides = {'top':cube.top,
-                      'bottom': cube.bottom,
-                      'left': cube.left,
-                      'right': cube.right,
-                      'front': cube.front,
-                      'back': cube.back}
 
-        for direction in solution_path:
-            if direction == 'up':
-                cube_sides['top'], cube_sides['bottom'], cube_sides['front'], cube_sides['back'] = cube_sides['front'], cube_sides['back'], cube_sides['bottom'], cube_sides['top']
-            if direction == 'down':
-                cube_sides['top'], cube_sides['bottom'], cube_sides['front'], cube_sides['back'] = cube_sides['back'], cube_sides['front'], cube_sides['top'], cube_sides['bottom']
-            if direction == 'left':
-                cube_sides['top'], cube_sides['bottom'], cube_sides['left'], cube_sides['right'] = cube_sides['right'], cube_sides['left'], cube_sides['top'], cube_sides['bottom']
-            if direction == 'right':
-                cube_sides['top'], cube_sides['bottom'], cube_sides['left'], cube_sides['right'] = cube_sides['left'], cube_sides['right'], cube_sides['bottom'], cube_sides['top']
-
+    def level_setter(self, tile_list, occupied_list, level_type):
         if level_type == 'broken_tiles':
             for tile in tile_list:
+                if tile == tile_list[0] : continue
                 selector = random.randint(0, 10)
                 if selector in range(0, 3) and tile.type != 'end':
                     tile.type = 'broken'
 
+        if level_type == 'locked_tiles':
+            available_tiles = []
 
+            for tile in tile_list:
+
+                if tile == tile_list[0] : continue
+
+                if (tile.x - 1, tile.y, tile.z) in occupied_list and (tile.x + 1, tile.y, tile.z) in occupied_list:
+                    if (tile.x, tile.y - 1, tile.z) not in occupied_list and (tile.x, tile.y + 1, tile.z) not in occupied_list:
+                        available_tiles.append(tile)
+                elif (tile.x, tile.y - 1, tile.z) in occupied_list and (tile.x, tile.y + 1, tile.z) in occupied_list:
+                    if (tile.x - 1, tile.y, tile.z) not in occupied_list and (tile.x + 1, tile.y, tile.z) not in occupied_list:
+                        available_tiles.append(tile)
+
+            if available_tiles:
+                locked_tile = random.choice(available_tiles)
+                locked_tile.type = 'locked'
+
+                for i in range(0, len(tile_list) - 1):
+                    if tile_list[i].type == 'locked':
+                        tile_list[i+1].type = 'locker'
+                
+                available_tiles.remove(locked_tile)
+
+
+    def can_generate_locked_tiles(self, tile_list, occupied_list):
+        available_tiles = []
+
+        for tile in tile_list:
+
+            if tile == tile_list[0] : continue
+
+            if (tile.x - 1, tile.y, tile.z) in occupied_list and (tile.x + 1, tile.y, tile.z) in occupied_list:
+                if (tile.x, tile.y - 1, tile.z) not in occupied_list and (tile.x, tile.y + 1, tile.z) not in occupied_list:
+                    available_tiles.append(tile)
+            elif (tile.x, tile.y - 1, tile.z) in occupied_list and (tile.x, tile.y + 1, tile.z) in occupied_list:
+                if (tile.x - 1, tile.y, tile.z) not in occupied_list and (tile.x + 1, tile.y, tile.z) not in occupied_list:
+                    available_tiles.append(tile)
+
+        return bool(available_tiles)
+
+    def locked_tile_number(self, cube, tile_list, solution_path):
+        
+        cube_sides = {'top':cube.top,
+                    'bottom': cube.bottom,
+                    'left': cube.left,
+                    'right': cube.right,
+                    'front': cube.front,
+                    'back': cube.back}
+
+        loop_number = 0
+        for tile in tile_list:
+            if tile.type != 'locked' : continue
+
+            
+            for direction in solution_path:
+                
+                if direction == 'up':
+                    cube_sides['top'], cube_sides['bottom'], cube_sides['front'], cube_sides['back'] = cube_sides['front'], cube_sides['back'], cube_sides['bottom'], cube_sides['top']
+                if direction == 'down':
+                    cube_sides['top'], cube_sides['bottom'], cube_sides['front'], cube_sides['back'] = cube_sides['back'], cube_sides['front'], cube_sides['top'], cube_sides['bottom']
+                if direction == 'left':
+                    cube_sides['top'], cube_sides['bottom'], cube_sides['left'], cube_sides['right'] = cube_sides['right'], cube_sides['left'], cube_sides['top'], cube_sides['bottom']
+                if direction == 'right':
+                    cube_sides['top'], cube_sides['bottom'], cube_sides['left'], cube_sides['right'] = cube_sides['left'], cube_sides['right'], cube_sides['bottom'], cube_sides['top']
+
+                loop_number += 1
+                if tile_list[loop_number] == tile:
+                    break
+                
+        return cube_sides['top']
+    
+    def locked_tile(self, cube, tile_list, number):
+        for i in range(0, len(tile_list)):
+            if tile_list[i].type == 'locked' and (cube.x, cube.y, cube.z) == (tile_list[i].x, tile_list[i].y, tile_list[i].z) and cube.top == number:
+                tile_list[i].type = 'unlocked'
+                tile_list[i+1].type = 'normal'
+        
+
+
+    # Function for functioning of broken tiles
     def broken_tiles(self, cube, tile_list, occupied_list):
-        for tile in tile_list[:]:
+        for tile in tile_list[1:]:
 
             if tile.type == 'broken':
                 if (cube.x, cube.y, cube.z) == (tile.x, tile.y, tile.z):

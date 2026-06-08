@@ -63,19 +63,19 @@ def solution_giver(cube, solution_way = solution_path):
 
 def next_level(tile, dice = dice, tiles = tiles, occupied_path = occupied_coords, solution_path = solution_path):
     global level_type
-    level_type_chooser = random.randint(0, 10)
-    if level_type_chooser in range(0, 1):
-        level_type = 'normal'
-    #elif level_type_chooser in range(6, 8):
-    #    level_type = 'lock'
-    else:
-        level_type = 'broken_tiles'
 
-    tile.generate_tiles(30, dice, tiles, occupied_path, solution_path, level_type)
+    possible_levels = ['normal', 'broken_tiles']
+    tile.generate_tiles(30, dice, tiles, occupied_path, solution_path)
+
+    if tile.can_generate_locked_tiles(tiles, occupied_path):
+        possible_levels.append('locked_tiles')
+
+    level_type = random.choice(possible_levels)
+
+    tile.level_setter(tiles, occupied_path, level_type)
+    
     solution_giver(dice)
 
-    
-    
     print(level_type)
 
 font = pygame.font.SysFont("Courier", 20, True)
@@ -101,12 +101,12 @@ while running:
             running = False
         if event.type == pygame.KEYDOWN:
                 # Dice movement over all the tiles
-                dice.movement(event, occupied_coords, offset)
+                dice.movement(event, tiles, occupied_coords, offset)
 
                 # Generate new tiles
                 if event.key == pygame.K_g:
-                    for tile in tiles:
-                        next_level(tile)
+                        next_level(tiles[0])
+                        locked_tile_number = tiles[0].locked_tile_number(dice, tiles, solution_path)
                         score = 0
 
     pressed = pygame.key.get_pressed()
@@ -116,7 +116,9 @@ while running:
         # Tiles should be generated everytime the player reaches the end
         if tile.type == 'end' and (tile.x, tile.y, tile.z) == (dice.x, dice.y, dice.z) and solution_face == dice.top:
             next_level(tile)
+            locked_tile_number = tile.locked_tile_number(dice, tiles, solution_path)
             score+=1
+        if level_type == 'locked_tiles' : tile.locked_tile(dice, tiles, locked_tile_number)
     
 
     # set the game fps to 60

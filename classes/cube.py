@@ -31,23 +31,38 @@ class Cube:
 
         pygame.draw.polygon(screen, self.color, self.polygon)
     
-    def movement(self, event, occupied_tiles, offset):
+    def movement(self, event, tile_list, occupied_tiles, offset):
+
         if event.key in (pygame.K_w, pygame.K_UP) and (self.x, self.y + 1, self.z) in occupied_tiles:
-            self.y += 1
-            offset[1] += 1
-            self.side_move('up')
+            tile_coords = (self.x, self.y + 1, self.z)
+
+            if tile_list[occupied_tiles.index(tile_coords)].type != 'locker':
+                self.y += 1
+                offset[1] += 1
+                self.side_move('up')
+
         if event.key in (pygame.K_s, pygame.K_DOWN) and (self.x, self.y - 1, self.z) in occupied_tiles:
-            self.y -= 1
-            offset[1] -= 1
-            self.side_move('down')
+            tile_coords = (self.x, self.y - 1, self.z)
+
+            if tile_list[occupied_tiles.index(tile_coords)].type != 'locker':
+                self.y -= 1
+                offset[1] -= 1
+                self.side_move('down')
         if event.key in (pygame.K_a, pygame.K_LEFT) and (self.x - 1, self.y, self.z) in occupied_tiles:
-            self.x -= 1
-            offset[0] -= 1
-            self.side_move('left')
+            tile_coords = (self.x - 1, self.y, self.z)
+
+            if tile_list[occupied_tiles.index(tile_coords)].type != 'locker':
+                self.x -= 1
+                offset[0] -= 1
+                self.side_move('left')
         if event.key in (pygame.K_d, pygame.K_RIGHT) and (self.x + 1, self.y, self.z) in occupied_tiles:
-            self.x += 1
-            offset[0] += 1
-            self.side_move('right')
+            tile_coords = (self.x + 1, self.y, self.z)
+
+            if tile_list[occupied_tiles.index(tile_coords)].type != 'locker':
+                self.x += 1
+                offset[0] += 1
+                self.side_move('right')
+
         
     def side_move(self, direction):
         if direction == 'up':
