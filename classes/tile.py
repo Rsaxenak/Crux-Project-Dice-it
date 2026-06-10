@@ -8,11 +8,10 @@ class Tile:
         self.x, self.y = x, y
         self.z = z
 
-        # the actual coordinates on screen
-
         self.color = (128, 128, 128)
         self.edge_size = 30 # Actual size of edge, not isometrically
 
+        # Tile of type is initially set to normal, which can be later changed to broken or locked
         self.type = 'normal'
         self.stepped_on = 0
 
@@ -21,8 +20,12 @@ class Tile:
 
 
     def draw(self, screen, offset):
+
+        # The coordinates that will be shown on the screen
         self.coords = (400 + (self.y - offset[1]) * 17.5 * math.sqrt(3) + (self.x - offset[0]) * 17.5 * math.sqrt(3), 
                        400 - (self.y - offset[1]) * 17.5 + (self.x - offset[0]) * 17.5)
+        
+        # Draws an isometric figure for the tiles
         self.polygon = [
             (self.coords[0], self.coords[1] - self.edge_size/2), # Top
             (self.coords[0] + self.edge_size/2 * math.sqrt(3), self.coords[1]), # Right
@@ -33,6 +36,7 @@ class Tile:
         pygame.draw.polygon(screen, self.color, self.polygon)
 
 
+        # color management according to the tile
         if self.type == 'end':
             self.color = (0, 255, 0)
         elif self.type == 'broken':
@@ -42,15 +46,18 @@ class Tile:
         else :
             self.color = (128, 128, 128)
 
+
+    # Handles tile generation
     def generate_tiles(self, n, cube, tile_list, occupied_list, solution_path):
         
         # Create a shallow copy to iterate over a list
         copy_of_tile_list = [el for el in tile_list]
+        # Remove all elements of solution path of the previous level
         solution_path.clear()
 
-        for el in copy_of_tile_list:
 
-            #Remove all the tiles except the tile on which player lands
+        for el in copy_of_tile_list:
+            #Remove all the tiles from tile list except the tile on which player lands
             if (el.x, el.y, el.z) != (cube.x, cube.y, cube.z): 
                 tile_list.remove(el)
                 occupied_list.remove((el.x, el.y, el.z))
@@ -58,6 +65,7 @@ class Tile:
 
         # To get the start tile
         start_tile = tile_list[0]
+        # Change the tile type from 'end' to 'normal'
         start_tile.type = 'normal'
 
         for i in range(0, n):
@@ -87,8 +95,6 @@ class Tile:
 
                 tile_list.append(Tile(new_tile_coords[0], new_tile_coords[1], new_tile_coords[2], occupied_list))
                 solution_path.append(direction)
-                
-            
             # If no such direction exists anymore, remove it
             else :
                 break
@@ -99,39 +105,46 @@ class Tile:
         end_tile.type = 'end'
 
 
+    # Handles the changing of tiles based on the level
     def level_setter(self, tile_list, occupied_list, level_type):
         if level_type == 'broken_tiles':
             for tile in tile_list:
-                if tile == tile_list[0] : continue
-                selector = random.randint(0, 10)
-                if selector in range(0, 3) and tile.type != 'end':
+                if tile == tile_list[0] : continue # Skip the start tile
+                # 36% chance the tile would be a broken tile
+                selector = random.randint(1, 10)
+                if selector in range(1, 3) and tile.type != 'end':
                     tile.type = 'broken'
 
         if level_type == 'locked_tiles':
-            available_tiles = []
+            available_tiles = [] # Create a list of available tiles, to choose which one should be locked
 
             for tile in tile_list:
 
-                if tile == tile_list[0] : continue
+                # Skip the start and end tile
+                if tile == tile_list[0] or tile.type == 'end': continue
 
+                # If the right and left tiles are the only tiles for a specific tile (to prevent a locked door with a open window right beside it)
                 if (tile.x - 1, tile.y, tile.z) in occupied_list and (tile.x + 1, tile.y, tile.z) in occupied_list:
                     if (tile.x, tile.y - 1, tile.z) not in occupied_list and (tile.x, tile.y + 1, tile.z) not in occupied_list:
                         available_tiles.append(tile)
+                # If the up and down tiles are the only tiles
                 elif (tile.x, tile.y - 1, tile.z) in occupied_list and (tile.x, tile.y + 1, tile.z) in occupied_list:
                     if (tile.x - 1, tile.y, tile.z) not in occupied_list and (tile.x + 1, tile.y, tile.z) not in occupied_list:
                         available_tiles.append(tile)
 
+            # If there are any available tiles, we make a random choice and change that tile to a locked tile
             if available_tiles:
                 locked_tile = random.choice(available_tiles)
                 locked_tile.type = 'locked'
 
+                # A locker tile, which helps indicate that the previous tile is locked
                 for i in range(0, len(tile_list) - 1):
                     if tile_list[i].type == 'locked':
                         tile_list[i+1].type = 'locker'
                 
-                available_tiles.remove(locked_tile)
 
 
+    # A function to ensure the level can be made a locked level
     def can_generate_locked_tiles(self, tile_list, occupied_list):
         available_tiles = []
 
@@ -146,8 +159,11 @@ class Tile:
                 if (tile.x - 1, tile.y, tile.z) not in occupied_list and (tile.x + 1, tile.y, tile.z) not in occupied_list:
                     available_tiles.append(tile)
 
+        # Returns True if the level has available tiles
         return bool(available_tiles)
+    
 
+    # Returns the locked tile number that unlocks the tile
     def locked_tile_number(self, cube, tile_list, solution_path):
         
         cube_sides = {'top':cube.top,
@@ -161,7 +177,7 @@ class Tile:
         for tile in tile_list:
             if tile.type != 'locked' : continue
 
-            
+            # Process to find the number that is required for the locked tile
             for direction in solution_path:
                 
                 if direction == 'up':
@@ -179,6 +195,7 @@ class Tile:
                 
         return cube_sides['top']
     
+    # Function to unlock a lock tile
     def locked_tile(self, cube, tile_list, number):
         for i in range(0, len(tile_list)):
             if tile_list[i].type == 'locked' and (cube.x, cube.y, cube.z) == (tile_list[i].x, tile_list[i].y, tile_list[i].z) and cube.top == number:
