@@ -2,6 +2,11 @@
 import pygame
 pygame.init()
 
+# Screen configurations
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
+
 # additional libraries
 import random
 
@@ -9,10 +14,7 @@ import random
 from classes.tile import Tile
 from classes.cube import Cube
 
-# Screen configurations
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
-screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
+
 
 # Cube
 dice = Cube(0, 0, 0)
@@ -167,12 +169,8 @@ while running:
             score += 1
             timer += 10
         if level_type == 'locked_tiles' : 
-            tile.locked_tile(dice, tiles, locked_tile_number)
-            locked_number_text = font.render(f'Locked number : {locked_tile_number}', True, (128, 128, 128))
-    
-    
-    if level_type == 'locked_tiles':
-        screen.blit(locked_number_text, (20, 140))
+            tile.locked_tile(dice, tiles, locked_tile_number, screen, font)
+
 
     # set the game fps to 60
     clock.tick(60)

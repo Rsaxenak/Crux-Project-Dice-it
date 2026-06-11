@@ -2,17 +2,34 @@ import pygame
 import math
 import random
 
+# Dictionary to load and store all the images
+tile_images = {'normal' : pygame.transform.smoothscale(
+                    pygame.image.load('assets/tiles/normal_tile.png').convert_alpha(), (63, 48)),
+               'broken' : pygame.transform.smoothscale(
+                    pygame.image.load('assets/tiles/broken_tile.png').convert_alpha(), (63, 48)),
+               'locked' : pygame.transform.smoothscale(
+                    pygame.image.load('assets/tiles/locked_tile.png').convert_alpha(), (63, 48)),
+                'locker' : pygame.transform.smoothscale(
+                    pygame.image.load('assets/tiles/locker_tile.png').convert_alpha(), (63, 48)),
+               'end' : pygame.transform.smoothscale(
+                    pygame.image.load('assets/tiles/end_tile.png').convert_alpha(), (63, 48))}
+
+
 class Tile:
     def __init__(self, x, y, z, occupied_list):
         # the 'x,y,z' coordinates of the game
         self.x, self.y = x, y
         self.z = z
 
-        self.color = (128, 128, 128)
-        self.edge_size = 30 # Actual size of edge, not isometrically
+        
+        self.coords = (0, 0)
+        # To control transparency
+        self.alpha = 255
 
         # Tile of type is initially set to normal, which can be later changed to broken or locked
         self.type = 'normal'
+
+        # To check if a tile has been stepped on already
         self.stepped_on = 0
 
         # Adds the tiles coordinates to the occupied list
@@ -21,30 +38,28 @@ class Tile:
 
     def draw(self, screen, offset):
 
-        # The coordinates that will be shown on the screen
+        # Updates the actual coordinates on the screen according to movement
         self.coords = (400 + (self.y - offset[1]) * 17.5 * math.sqrt(3) + (self.x - offset[0]) * 17.5 * math.sqrt(3), 
                        400 - (self.y - offset[1]) * 17.5 + (self.x - offset[0]) * 17.5)
         
-        # Draws an isometric figure for the tiles
-        self.polygon = [
-            (self.coords[0], self.coords[1] - self.edge_size/2), # Top
-            (self.coords[0] + self.edge_size/2 * math.sqrt(3), self.coords[1]), # Right
-            (self.coords[0], self.coords[1] + self.edge_size/2), # Bottom
-            (self.coords[0] - self.edge_size/2 * math.sqrt(3), self.coords[1]) # Left
-        ]
 
-        pygame.draw.polygon(screen, self.color, self.polygon)
-
-
-        # color management according to the tile
+        # Handles image assignment based on type
+        if self.type == 'normal' or self.type == 'unlocked':
+            self.image = tile_images['normal'].copy()
+        if self.type == 'broken':
+            self.image = tile_images['broken'].copy()
+        if self.type == 'locker':
+            self.image = tile_images['locked'].copy()
         if self.type == 'end':
-            self.color = (0, 255, 0)
-        elif self.type == 'broken':
-            self.color = (0, 0, 255)
-        elif self.type == 'locker':
-            self.color = (255, 255, 0)
-        else :
-            self.color = (128, 128, 128)
+            self.image = tile_images['end'].copy()
+        if self.type == 'locked':
+            self.image = tile_images['locker'].copy()
+        
+        # Especially for broken tiles
+        self.image.set_alpha(self.alpha)
+        
+        # Display the image on screen
+        screen.blit(self.image, (self.coords[0] - tile_images['normal'].get_width()//2, self.coords[1] - tile_images['normal'].get_height()//2))
 
 
     # Handles tile generation
@@ -196,11 +211,16 @@ class Tile:
         return cube_sides['top']
     
     # Function to unlock a lock tile
-    def locked_tile(self, cube, tile_list, number):
+    def locked_tile(self, cube, tile_list, number, screen, font):
         for i in range(0, len(tile_list)):
-            if tile_list[i].type == 'locked' and (cube.x, cube.y, cube.z) == (tile_list[i].x, tile_list[i].y, tile_list[i].z) and cube.top == number:
-                tile_list[i].type = 'unlocked'
-                tile_list[i+1].type = 'normal'
+            if tile_list[i].type == 'locked':
+                # Display the locked tile number
+                text = font.render(f'{number}', True, (255, 0, 0))
+                screen.blit(text, (tile_list[i].coords[0] - 5, tile_list[i].coords[1] - 10))
+                # If the player's dice top matches the required number, unlock the tile
+                if (cube.x, cube.y, cube.z) == (tile_list[i].x, tile_list[i].y, tile_list[i].z) and cube.top == number:
+                    tile_list[i].type = 'unlocked'
+                    tile_list[i+1].type = 'normal'
         
 
 
@@ -213,5 +233,11 @@ class Tile:
                     tile.stepped_on = 1
             
             if tile.stepped_on and (cube.x, cube.y, cube.z) != (tile.x, tile.y, tile.z):
-                tile_list.remove(tile)
-                occupied_list.remove((tile.x, tile.y, tile.z))
+                # Slowly fade the tile
+                tile.alpha -= 1
+                # Cap to 0
+                tile.alpha = max(0, tile.alpha)
+                # Remove the tile once disappeared
+                if tile.alpha <= 0:
+                    tile_list.remove(tile)
+                    occupied_list.remove((tile.x, tile.y, tile.z))
