@@ -114,7 +114,6 @@ class Tile:
             else :
                 break
         
-        print(solution_path)
         # To find the end_tile
         end_tile = tile_list[-1]
         end_tile.type = 'end'
@@ -136,7 +135,7 @@ class Tile:
             for tile in tile_list:
 
                 # Skip the start and end tile
-                if tile == tile_list[0] or tile.type == 'end': continue
+                if tile == tile_list[0] or tile.type == 'end' or tile == tile_list[-2]: continue
 
                 # If the right and left tiles are the only tiles for a specific tile (to prevent a locked door with a open window right beside it)
                 if (tile.x - 1, tile.y, tile.z) in occupied_list and (tile.x + 1, tile.y, tile.z) in occupied_list:

@@ -13,8 +13,8 @@ import random
 # import classes from files
 from classes.tile import Tile
 from classes.cube import Cube
-
-
+from classes.stars import Stars
+from classes.buttons import Buttons
 
 # Cube
 dice = Cube(0, 0, 0)
@@ -25,8 +25,9 @@ offset = [0,0]
 # Tiles
 
 occupied_coords = [] # Keeps track of the coordinates of each tile
-tiles = [
-     Tile(0, 0, 0, occupied_coords),
+
+# Tile list
+tiles = [Tile(0, 0, 0, occupied_coords),
      Tile(0, 1, 0, occupied_coords),
      Tile(1, 0, 0, occupied_coords),
      Tile(1, 1, 0, occupied_coords),
@@ -34,11 +35,13 @@ tiles = [
      Tile(-1, 1, 0, occupied_coords),
      Tile(-1, -1, 0, occupied_coords),
      Tile(-1, 0, 0, occupied_coords),
-     Tile(1, -1, 0, occupied_coords)
-] # A whole tile list (with some starter tiles)
+     Tile(1, -1, 0, occupied_coords)]
+
+# Decoration stars list
+stars = []
 
 # Score system
-score = 0
+level_no = 1
 
 # Gamestate
 game_state = 'menu'
@@ -97,7 +100,6 @@ def next_level(tile, dice = dice, tiles = tiles, occupied_path = occupied_coords
     # Once the level is generated, the required face is calculated
     solution_giver(dice)
 
-    print(level_type)
 
 # Game timer
 timer = 0
@@ -105,56 +107,57 @@ timer = 0
 # Handles the font of the game
 font = pygame.font.SysFont("Courier", 20, True)
 
+# just a small watermark
+author_text = font.render("Made by : Rishabh Saxena", True, (255, 255, 255))
+
 # Pygame clock
 clock = pygame.time.Clock()
+
+# All the images required to load
+background_img = pygame.transform.smoothscale(pygame.image.load('assets/background.jpg'), (800, 600))
+dice_it_logo = pygame.transform.smoothscale(pygame.image.load('assets/Dice_it_logo.png'), (510,280))
+# Displays when pressed How to play button
+how_to_play_img = pygame.transform.smoothscale(pygame.image.load('assets/How_to_play.png'), (387, 440))
+
+# Menu buttons
+start_button = Buttons(200, 270, 'START', True)
+quit_button = Buttons(600, 500, 'QUIT', True)
+how_to_play_button = Buttons(420, 270, 'HOW TO PLAY', True)
+
+# How to play screen button
+close_htp_button = Buttons(550, 500, "CLOSE", True)
+
+# UI texts (shown during gameplay)
+required_number_text = Buttons(270, 50, "Required no. : ", False)
+timer_text = Buttons(20, 50, "Timer : ", False)
+level_text = Buttons(600, 50, "Level : ", False)
+
+# lost screen texts and buttons
+you_lost_text = Buttons (350, 80, 'GAME OVER', False, (255, 0, 0))
+your_score_text = Buttons(300, 150, 'Your score : ', False)
+# Restart button to play again
+restart_button = Buttons(550, 500, "RESTART", True)
+# Back to main menu
+back_to_menu_button = Buttons(50, 500, "Back to main menu", True)
 
 # Game loop
 running = True
 while running:
-    # background color
-    screen.fill("white")
+    # background image
+    screen.blit(background_img, (0, 0))
 
-    # All the text shown in the game: -
+    # Add decorative stars
+    if len(stars) < 30:
+        vel = random.randint(1, 3)
+        stars.append(Stars(vel, vel))
 
-    # Dice top side
-    top_side = font.render(f'Your top side : {dice.top}', True, (128, 128, 128))
-    screen.blit(top_side, (20, 20))
-    # Required top side
-    required_side = font.render(f'Required side : {solution_face}', True, (128, 128, 128))
-    screen.blit(required_side, (20, 50))
-    # Score 
-    score_text = font.render(f'Score : {score}', True, (128, 128, 128))
-    screen.blit(score_text, (20, 80))
-    # Timer
-    timer_text = font.render(f'Timer : {int(timer)}', True, (128, 128, 128))
-    screen.blit(timer_text, (20, 110))
-    # Lost text
-    you_lost_text = font.render(f'You lost. Press G to play again', True, (128, 128, 128))
-    if game_state == 'lost':
-        screen.blit(you_lost_text, (160, 100))
-    # Shows the level type
-    level_type_text = font.render(level_type.capitalize(), True, (128, 128, 128))
-    screen.blit(level_type_text, (600, 20))
-    
-
-    # Event catching loop
-    for event in pygame.event.get():
-        # Event type is quit
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.KEYDOWN:
-            # Dice movement over all the tiles
-            if game_state == 'play':
-                dice.movement(event, tiles, occupied_coords, offset)
-
-            # Restart the game
-            if event.key == pygame.K_g:
-                if game_state != 'play': game_state = 'play'
-                # Generate new tiles
-                next_level(tiles[0])
-                locked_tile_number = tiles[0].locked_tile_number(dice, tiles, solution_path)
-                score = 0
-                timer = 16
+    # Stars functions
+    for star in stars[:]:
+        star.draw(screen)
+        star.movement()
+        # if the star is out of screen, remove it
+        if star.x < 0 or star.x > 800 or star.y < 0 or star.y > 600:
+            stars.remove(star)
 
     # Tile handling functions
     for tile in tiles[:]:
@@ -166,24 +169,142 @@ while running:
         if tile.type == 'end' and (tile.x, tile.y, tile.z) == (dice.x, dice.y, dice.z) and solution_face == dice.top:
             next_level(tile)
             locked_tile_number = tile.locked_tile_number(dice, tiles, solution_path)
-            score += 1
-            timer += 10
+            level_no += 1
+            timer += 15
+        # locked tile function
         if level_type == 'locked_tiles' : 
             tile.locked_tile(dice, tiles, locked_tile_number, screen, font)
 
+    # Dice drawing
+    dice.draw(screen, offset)
 
-    # set the game fps to 60
-    clock.tick(60)
 
-    # Timer working when game_state is 'play'
+    # When gamestate is 'menu' (mainly to draw)
+    if game_state == 'menu':
+        # Display game logo
+        screen.blit(dice_it_logo, (400 - dice_it_logo.get_width()//2, 20))
+        # Draw the buttons
+        start_button.draw(screen)
+        quit_button.draw(screen)
+        how_to_play_button.draw(screen)
+        # show watermark
+        screen.blit(author_text, (10, 580))
+
+    # How to play screen
+    if game_state == 'htp':
+        screen.blit(how_to_play_img, (400 - how_to_play_img.get_width()//2, 250 - how_to_play_img.get_height()//2))
+        close_htp_button.draw(screen)
+
+    # Gamestate play functions
     if game_state == 'play': 
+
+        # Text elements (update with the game)
+        required_number_text.draw(screen)
+        required_number_text.text = f'Required no. : {solution_face}'
+        timer_text.draw(screen)
+        timer_text.text = f'Time left : {int(timer)}'
+        level_text.draw(screen)
+        level_text.text = f'Level : {level_no}'
+
+        # Changes the timer color when less than 10 to warn the player
+        if timer <= 10:
+            timer_text.text_color = (255, 0, 0)
+        else :
+            timer_text.text_color = (255, 255, 255)
+
+        # Timer working when game_state is 'play'
         timer -= 0.02
         if timer <= 0:
             # Game lost if hit 0
             game_state = 'lost'
+        
+        # if the player has no more directions to go to, he loses (mostly in broken tile maps)
+        if (dice.x + 1, dice.y, dice.z) not in occupied_coords and (dice.x, dice.y + 1, dice.z) not in occupied_coords and (dice.x - 1, dice.y, dice.z) not in occupied_coords and (dice.x, dice.y - 1, dice.z) not in occupied_coords:
+            if (dice.x, dice.y) == (tiles[-1].x, tiles[-1].y) and dice.top != solution_face:
+                game_state = 'lost'
+            if (dice.x, dice.y) != (tiles[-1].x, tiles[-1].y):
+                game_state = 'lost'
+                
+    # Shown when game over
+    if game_state == 'lost':
+            you_lost_text.draw(screen)
+            your_score_text.draw(screen)
+            # Shows your score
+            your_score_text.text = f'Your score : {level_no}'
+            back_to_menu_button.draw(screen)
+            restart_button.draw(screen)
 
-    # Dice drawing
-    dice.draw(screen, offset)
+            
+
+    # Event catching loop
+    for event in pygame.event.get():
+        # Event type is quit
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN:
+            # Dice movement over all the tiles
+            if game_state == 'play':
+                dice.movement(event, tiles, occupied_coords, offset)
+
+        # Button functions when game state is menu
+        if game_state == 'menu':
+
+            start_button.clickable_func(event)
+            quit_button.clickable_func(event)
+            how_to_play_button.clickable_func(event)
+            # If start button is pressed, start the game
+            if start_button.status:
+                game_state = 'play'
+                next_level(tiles[0])
+                locked_tile_number = tiles[0].locked_tile_number(dice, tiles, solution_path)
+                level_no = 1
+                timer = 21      
+                # reset the button to false status
+                start_button.status = False
+            # To quit the game
+            if quit_button.status :
+                running = False
+            # To show the How to play instructions
+            if how_to_play_button.status:
+                game_state = 'htp'
+
+        # When how to play instructions are shown
+        if game_state == 'htp':
+            # To close and go back to main menu
+            close_htp_button.clickable_func(event)
+            if close_htp_button.status:
+                game_state = 'menu'
+
+        # When game is over
+        if game_state == 'lost':
+            back_to_menu_button.clickable_func(event)
+            restart_button.clickable_func(event)
+
+            # On pressing back to menu button, reset the tiles list and dice position 
+            if back_to_menu_button.status:
+                game_state = 'menu'
+                tiles = [Tile(0, 0, 0, occupied_coords),
+                         Tile(0, 1, 0, occupied_coords),
+                         Tile(1, 0, 0, occupied_coords),
+                         Tile(1, 1, 0, occupied_coords),
+                         Tile(0, -1, 0, occupied_coords),
+                         Tile(-1, 1, 0, occupied_coords),
+                         Tile(-1, -1, 0, occupied_coords),
+                         Tile(-1, 0, 0, occupied_coords),
+                         Tile(1, -1, 0, occupied_coords)]
+                dice.x, dice.y = 0, 0
+                back_to_menu_button.status = False
+            # On pressing restart button, restart the game
+            if restart_button.status:
+                game_state = 'play'
+                next_level(tiles[0])
+                locked_tile_number = tiles[0].locked_tile_number(dice, tiles, solution_path)
+                level_no = 1
+                timer = 21      
+                restart_button.status = False
+            
+    # set the game fps to 60
+    clock.tick(60)
 
     # update display
     pygame.display.update()
