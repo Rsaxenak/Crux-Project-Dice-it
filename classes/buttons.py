@@ -34,9 +34,11 @@ class Buttons:
         text_width, text_height = font.size(self.text)
 
         # the rectangle dimensions modified based on text size
+        self.back_rect = pygame.Rect(self.x - 5, self.y - 5, text_width + 50, text_height + 30)
         self.rect = pygame.Rect(self.x, self.y, text_width + 40, text_height + 20)
 
         # Draw the rectangle
+        pygame.draw.rect(screen, (255, 255, 255), self.back_rect)
         pygame.draw.rect(screen, self.color, self.rect)
         # Display text over the rectangle
         screen.blit(font.render(self.text, True, (self.text_color)), (self.x + self.rect.width//2 - len(self.text) * 6.5, self.y + self.rect.height//2 - 10))

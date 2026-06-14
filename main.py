@@ -82,22 +82,21 @@ def solution_giver(cube, solution_way = solution_path):
     solution_face = cube_sides['top']
 
 # Next level generator
-def next_level(tile, dice = dice, tiles = tiles, occupied_path = occupied_coords, solution_path = solution_path):
+def next_level(tile, dice = dice):
     global level_type
 
-
     possible_levels = ['normal', 'broken_tiles']
-    tile.generate_tiles(30, dice, tiles, occupied_path, solution_path)
+    tile.generate_tiles(30, dice, tiles, occupied_coords, solution_path)
 
     # If it is possible to make a level of locked_tiles, we add it to possible levels
-    if tile.can_generate_locked_tiles(tiles, occupied_path):
+    if tile.can_generate_locked_tiles(tiles, occupied_coords):
         possible_levels.append('locked_tiles')
 
     # Choose the level randomly
     level_type = random.choice(possible_levels)
 
     # Handles the tile type changes and in general, sets the level
-    tile.level_setter(tiles, occupied_path, level_type)
+    tile.level_setter(tiles, occupied_coords, level_type)
     
     # Once the level is generated, the required face is calculated
     solution_giver(dice)
@@ -142,11 +141,15 @@ level_text = Buttons(600, 50, "Level : ", False)
 
 # lost screen texts and buttons
 you_lost_text = Buttons (320, 80, 'GAME OVER', False, (255, 0, 0))
-your_score_text = Buttons(280, 150, 'Your score : ', False)
+your_score_text = Buttons(290, 150, 'Your score : ', False)
 # Restart button to play again
-restart_button = Buttons(550, 500, "RESTART", True)
+restart_button = Buttons(570, 500, "RESTART", True)
 # Back to main menu
 back_to_menu_button = Buttons(50, 500, "Back to main menu", True)
+# Give solution button
+solution_button = Buttons(350, 500, "GIVE SOLUTION", True)
+# a variable that ensures if the solution should be shown or not
+show_solution = False
 
 # Game loop
 running = True
@@ -244,6 +247,7 @@ while running:
             your_score_text.text = f'Your score : {level_no}'
             back_to_menu_button.draw(screen)
             restart_button.draw(screen)
+            solution_button.draw(screen)
 
             
 
@@ -268,7 +272,7 @@ while running:
                 next_level(tiles[0])
                 locked_tile_number = tiles[0].locked_tile_number(dice, tiles, solution_path)
                 level_no = 1
-                timer = 21      
+                timer = 16     
                 # reset the button to false status
                 start_button.status = False
             # To quit the game
@@ -291,10 +295,15 @@ while running:
         if game_state == 'lost':
             back_to_menu_button.clickable_func(event)
             restart_button.clickable_func(event)
+            solution_button.clickable_func(event)
 
-            # On pressing back to menu button, reset the tiles list and dice position 
+            # On pressing back to menu button, reset the tiles list, dice position, offset, occupied coords and solution path 
             if back_to_menu_button.status:
                 game_state = 'menu'
+                dice.x, dice.y = 0, 0
+                offset[0], offset[1] = 0, 0
+                occupied_coords.clear()
+                solution_path.clear()
                 tiles = [Tile(0, 0, 0, occupied_coords),
                          Tile(0, 1, 0, occupied_coords),
                          Tile(1, 0, 0, occupied_coords),
@@ -304,8 +313,10 @@ while running:
                          Tile(-1, -1, 0, occupied_coords),
                          Tile(-1, 0, 0, occupied_coords),
                          Tile(1, -1, 0, occupied_coords)]
-                dice.x, dice.y = 0, 0
+
                 back_to_menu_button.status = False
+                # hide the solution when back to menu button is pressed
+                show_solution = False
             # On pressing restart button, restart the game
             if restart_button.status:
                 game_state = 'play'
@@ -314,7 +325,23 @@ while running:
                 level_no = 1
                 timer = 21      
                 restart_button.status = False
-            
+                # Hide solution 
+                show_solution = False
+            # when give solution button is pressed, show solution
+            if solution_button.status:
+                show_solution = True
+                solution_button.status = False
+    
+    # Writes down the solution of that level on pressing show solution
+    if show_solution:
+        for i in range(1, len(solution_path) + 1):
+            if i <= 15:
+                screen.blit(font.render(solution_path[i-1].capitalize(), True, (255, 255, 255)), (610, 20*i))
+
+            # Divided into 2 columns
+            else:
+                screen.blit(font.render(solution_path[i-1].capitalize(), True, (255, 255, 255)), (700, 20*(i-15)))
+
     # set the game fps to 60
     clock.tick(60)
 

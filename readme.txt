@@ -1,7 +1,7 @@
 DICE PUZZLE GAME: - (by Rishabh Saxena)
 
-1. This project is a procedurally generated dize puzzles game developed using Python and Pygame.
-2. The player controls a dice that rolls accross an isometric tile-based map. The objective is to reach the goal tile ensuring that the required face of the dice is on top.
+1. This project is a procedurally generated dice puzzle game developed using Python and Pygame.
+2. The player controls a dice that rolls across an isometric tile-based map. The objective is to reach the goal tile ensuring that the required face of the dice is on top.
 
 Features: -
 1. Procedurally generated levels
