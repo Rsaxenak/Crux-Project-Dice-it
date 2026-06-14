@@ -1,5 +1,9 @@
 import pygame
 
+# button sound that will be played whenever a button is pressed
+button_sound = pygame.mixer.Sound("assets/sound effects/button_press.wav")
+button_sound.set_volume(0.2)
+
 # Buttons class (includes clickable buttons, and normal text features for UI)
 class Buttons:
     def __init__(self, x, y, text, clickable, color = (255, 255, 255)):
@@ -22,9 +26,9 @@ class Buttons:
         self.rect = pygame.Rect(self.x, self.y, 10, 10)
         
 
-    def draw(self, screen):
+    def draw(self, screen, font_size = 20):
         # Create another font variable instead of calling main file font to have different sizes
-        font = pygame.font.SysFont("Courier", 20, True)
+        font = pygame.font.SysFont("Courier", font_size, True)
 
         # Width and height calculated based on text size
         text_width, text_height = font.size(self.text)
@@ -53,5 +57,6 @@ class Buttons:
         if self.clickable:
             if self.rect.collidepoint(mouse_pos):
                 if event.type == pygame.MOUSEBUTTONDOWN:
+                    button_sound.play()
                     self.status = True
 

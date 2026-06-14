@@ -1,6 +1,8 @@
 # initialize pygame
 import pygame
 pygame.init()
+# initialize sound mixer
+pygame.mixer.init()
 
 # Screen configurations
 SCREEN_WIDTH = 800
@@ -119,6 +121,12 @@ dice_it_logo = pygame.transform.smoothscale(pygame.image.load('assets/Dice_it_lo
 # Displays when pressed How to play button
 how_to_play_img = pygame.transform.smoothscale(pygame.image.load('assets/How_to_play.png'), (387, 440))
 
+# Game state sounds
+end_sound = pygame.mixer.Sound("assets/sound effects/end_level.wav")
+end_sound.set_volume(0.5)
+lost_sound = pygame.mixer.Sound("assets/sound effects/lost.wav")
+lost_sound.set_volume(0.5)
+
 # Menu buttons
 start_button = Buttons(200, 270, 'START', True)
 quit_button = Buttons(600, 500, 'QUIT', True)
@@ -133,8 +141,8 @@ timer_text = Buttons(20, 50, "Timer : ", False)
 level_text = Buttons(600, 50, "Level : ", False)
 
 # lost screen texts and buttons
-you_lost_text = Buttons (350, 80, 'GAME OVER', False, (255, 0, 0))
-your_score_text = Buttons(300, 150, 'Your score : ', False)
+you_lost_text = Buttons (320, 80, 'GAME OVER', False, (255, 0, 0))
+your_score_text = Buttons(280, 150, 'Your score : ', False)
 # Restart button to play again
 restart_button = Buttons(550, 500, "RESTART", True)
 # Back to main menu
@@ -171,6 +179,7 @@ while running:
             locked_tile_number = tile.locked_tile_number(dice, tiles, solution_path)
             level_no += 1
             timer += 15
+            end_sound.play()
         # locked tile function
         if level_type == 'locked_tiles' : 
             tile.locked_tile(dice, tiles, locked_tile_number, screen, font)
@@ -217,6 +226,8 @@ while running:
         if timer <= 0:
             # Game lost if hit 0
             game_state = 'lost'
+            lost_sound.play()
+
         
         # if the player has no more directions to go to, he loses (mostly in broken tile maps)
         if (dice.x + 1, dice.y, dice.z) not in occupied_coords and (dice.x, dice.y + 1, dice.z) not in occupied_coords and (dice.x - 1, dice.y, dice.z) not in occupied_coords and (dice.x, dice.y - 1, dice.z) not in occupied_coords:
@@ -248,7 +259,6 @@ while running:
 
         # Button functions when game state is menu
         if game_state == 'menu':
-
             start_button.clickable_func(event)
             quit_button.clickable_func(event)
             how_to_play_button.clickable_func(event)
@@ -267,6 +277,7 @@ while running:
             # To show the How to play instructions
             if how_to_play_button.status:
                 game_state = 'htp'
+                how_to_play_button.status = False
 
         # When how to play instructions are shown
         if game_state == 'htp':
@@ -274,6 +285,7 @@ while running:
             close_htp_button.clickable_func(event)
             if close_htp_button.status:
                 game_state = 'menu'
+                close_htp_button.status = False
 
         # When game is over
         if game_state == 'lost':
