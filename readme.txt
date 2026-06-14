@@ -23,3 +23,6 @@ Solution path is generated alongside the level, ensuring each level can be compl
 
 Technologies used: -
 Pygame (Python)
+Pyinstaller (py to exe file)
+
+(Code is provided in the code folder)
